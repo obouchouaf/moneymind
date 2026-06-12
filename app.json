@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "WealthPilot",
+    "slug": "wealthpilot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0A0A1F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.wealthpilot.app"
+    },
+    "android": {
+      "package": "com.wealthpilot.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#6C63FF",
+        "foregroundImage": "./assets/icon.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-secure-store"
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#6C63FF"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
