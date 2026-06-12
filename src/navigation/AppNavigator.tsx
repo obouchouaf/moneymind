@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Platform, Text as RNText } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,7 +30,8 @@ import { CoachScreen } from '../screens/coach/CoachScreen';
 import { InsightsScreen } from '../screens/insights/InsightsScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 
-const Stack = createNativeStackNavigator();
+// Use pure-JS stack (works on web), not native-stack
+const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS: Record<string, { focused: string; unfocused: string }> = {
@@ -94,7 +95,6 @@ function MainTabs() {
               shadowRadius: 8,
               elevation: 8,
             }}>
-              {/* Use RNText, not the custom Text component (which calls hooks) */}
               <RNText style={{ fontSize: 22 }}>🤖</RNText>
             </View>
           ),
@@ -107,20 +107,19 @@ function MainTabs() {
   );
 }
 
+const screenOptions = {
+  headerShown: false,
+  cardStyle: { flex: 1 },
+  // Disable native animations on web for reliability
+  animationEnabled: Platform.OS !== 'web',
+};
+
 function MainStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Main" component={MainTabs} />
-      <Stack.Screen
-        name="AddTransaction"
-        component={AddTransactionScreen}
-        options={{ presentation: 'modal' }}
-      />
-      <Stack.Screen
-        name="EditTransaction"
-        component={AddTransactionScreen}
-        options={{ presentation: 'modal' }}
-      />
+      <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
+      <Stack.Screen name="EditTransaction" component={AddTransactionScreen} />
       <Stack.Screen name="Budgets" component={BudgetsScreen} />
       <Stack.Screen name="Subscriptions" component={SubscriptionsScreen} />
       <Stack.Screen name="Savings" component={SavingsScreen} />
@@ -130,7 +129,7 @@ function MainStack() {
 
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -138,24 +137,62 @@ function AuthStack() {
   );
 }
 
+// Extend DarkTheme so NavigationContainer background is dark, not white
+const WealthPilotDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Colors.primary,
+    background: Colors.dark.background,
+    card: Colors.dark.surface,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+    notification: Colors.primary,
+  },
+};
+
+const WealthPilotLightTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: Colors.primary,
+    background: Colors.light.background,
+    card: Colors.light.surface,
+    text: Colors.light.text,
+    border: Colors.light.border,
+    notification: Colors.primary,
+  },
+};
+
 export const AppNavigator = () => {
   const { session, isLoading, isOnboarded, setSession, fetchProfile, fetchSettings } = useAuthStore();
   const { fetchTransactions } = useTransactionStore();
   const { fetchAll } = useAppStore();
+  const theme = useAppStore((s) => s.theme);
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAppReady(true);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+      })
+      .catch((err) => {
+        console.error('getSession failed:', err);
+      })
+      .finally(() => {
+        setAppReady(true);
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user) {
-        await Promise.all([fetchProfile(), fetchSettings()]);
-        fetchTransactions();
-        fetchAll();
+        try {
+          await Promise.all([fetchProfile(), fetchSettings()]);
+          fetchTransactions();
+          fetchAll();
+        } catch (err) {
+          console.error('Post-auth fetch failed:', err);
+        }
       }
     });
 
@@ -166,12 +203,14 @@ export const AppNavigator = () => {
     return <LoadingScreen message="Starting WealthPilot..." />;
   }
 
+  const navTheme = theme === 'dark' ? WealthPilotDarkTheme : WealthPilotLightTheme;
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navTheme}>
       {!session ? (
         <AuthStack />
       ) : !isOnboarded ? (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={screenOptions}>
           <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} />
         </Stack.Navigator>
       ) : (
