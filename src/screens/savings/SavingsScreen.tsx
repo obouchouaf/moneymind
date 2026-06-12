@@ -36,6 +36,9 @@ export const SavingsScreen = () => {
   const currency = profile?.currency || 'USD';
   const [showAdd, setShowAdd] = useState(false);
   const [showDetail, setShowDetail] = useState<SavingsGoal | null>(null);
+  const [showAddFunds, setShowAddFunds] = useState(false);
+  const [addFundsGoal, setAddFundsGoal] = useState<SavingsGoal | null>(null);
+  const [addFundsAmount, setAddFundsAmount] = useState('');
   const [aiPlan, setAiPlan] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -79,22 +82,22 @@ export const SavingsScreen = () => {
     ]);
   };
 
-  const handleAddFunds = async (goal: SavingsGoal) => {
-    Alert.prompt(
-      'Add Funds',
-      `How much did you save towards "${goal.name}"?`,
-      async (amount) => {
-        if (!amount || isNaN(parseFloat(amount))) return;
-        const newAmount = goal.current_amount + parseFloat(amount);
-        await updateSavingsGoal(goal.id, {
-          current_amount: newAmount,
-          is_completed: newAmount >= goal.target_amount,
-        });
-      },
-      'plain-text',
-      '',
-      'numeric'
-    );
+  const handleAddFunds = (goal: SavingsGoal) => {
+    setAddFundsGoal(goal);
+    setAddFundsAmount('');
+    setShowAddFunds(true);
+  };
+
+  const confirmAddFunds = async () => {
+    if (!addFundsGoal || !addFundsAmount || isNaN(parseFloat(addFundsAmount))) return;
+    const newAmount = addFundsGoal.current_amount + parseFloat(addFundsAmount);
+    await updateSavingsGoal(addFundsGoal.id, {
+      current_amount: newAmount,
+      is_completed: newAmount >= addFundsGoal.target_amount,
+    });
+    setShowAddFunds(false);
+    setAddFundsGoal(null);
+    setAddFundsAmount('');
   };
 
   const getAIPlan = async (goal: SavingsGoal) => {
@@ -257,6 +260,56 @@ export const SavingsScreen = () => {
           })
         )}
       </ScrollView>
+
+      {/* Add Funds Modal */}
+      <Modal visible={showAddFunds} animationType="slide" presentationStyle="formSheet" transparent>
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={{ backgroundColor: themeColors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: Spacing.lg, paddingBottom: 40 }}>
+              <Text variant="h4" style={{ marginBottom: 8 }}>Add Funds</Text>
+              {addFundsGoal && (
+                <Text secondary style={{ marginBottom: 16 }}>Towards: {addFundsGoal.name}</Text>
+              )}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: themeColors.card,
+                borderRadius: BorderRadius.md,
+                borderWidth: 2,
+                borderColor: Colors.primary,
+                paddingHorizontal: Spacing.md,
+                height: 60,
+                marginBottom: Spacing.lg,
+              }}>
+                <Text style={{ fontSize: 24, color: themeColors.textSecondary, marginRight: 8 }}>$</Text>
+                <TextInput
+                  value={addFundsAmount}
+                  onChangeText={setAddFundsAmount}
+                  placeholder="0.00"
+                  placeholderTextColor={themeColors.placeholder}
+                  keyboardType="numeric"
+                  autoFocus
+                  style={{ flex: 1, color: themeColors.text, fontSize: 28, fontWeight: '700' }}
+                />
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => setShowAddFunds(false)}
+                  style={{ flex: 1, paddingVertical: 14, borderRadius: BorderRadius.lg, backgroundColor: themeColors.card, borderWidth: 1, borderColor: themeColors.border, alignItems: 'center' }}
+                >
+                  <Text variant="bodyMedium">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={confirmAddFunds}
+                  style={{ flex: 1, paddingVertical: 14, borderRadius: BorderRadius.lg, backgroundColor: Colors.primary, alignItems: 'center' }}
+                >
+                  <Text variant="bodyMedium" color="#FFF" style={{ fontWeight: '700' }}>Add</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       {/* Add Goal Modal */}
       <Modal visible={showAdd} animationType="slide" presentationStyle="pageSheet">
@@ -428,8 +481,8 @@ export const SavingsScreen = () => {
               <Button
                 title="Add Funds"
                 onPress={() => {
+                  if (showDetail) handleAddFunds(showDetail);
                   setShowDetail(null);
-                  handleAddFunds(showDetail);
                 }}
                 fullWidth
               />

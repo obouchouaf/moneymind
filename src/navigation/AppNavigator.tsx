@@ -2,15 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Platform } from 'react-native';
+import { View, Platform, Text as RNText } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../services/supabase';
 import { useAuthStore } from '../store/authStore';
 import { useAppStore } from '../store/appStore';
 import { useTransactionStore } from '../store/transactionStore';
-import { Colors, BorderRadius } from '../theme';
+import { Colors } from '../theme';
 import { LoadingScreen } from '../components/ui/LoadingScreen';
-import { Text } from '../components/ui/Text';
 
 // Auth screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -37,7 +36,6 @@ const Tab = createBottomTabNavigator();
 const TAB_ICONS: Record<string, { focused: string; unfocused: string }> = {
   Dashboard: { focused: 'home', unfocused: 'home-outline' },
   Transactions: { focused: 'receipt', unfocused: 'receipt-outline' },
-  Coach: { focused: 'chatbubble-ellipses', unfocused: 'chatbubble-ellipses-outline' },
   Insights: { focused: 'bar-chart', unfocused: 'bar-chart-outline' },
   Settings: { focused: 'settings', unfocused: 'settings-outline' },
 };
@@ -64,9 +62,10 @@ function MainTabs() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
         tabBarIcon: ({ focused, color }) => {
           const icons = TAB_ICONS[route.name];
+          if (!icons) return null;
           return (
             <Ionicons
-              name={(focused ? icons?.focused : icons?.unfocused) as any}
+              name={(focused ? icons.focused : icons.unfocused) as any}
               size={22}
               color={color}
             />
@@ -95,7 +94,8 @@ function MainTabs() {
               shadowRadius: 8,
               elevation: 8,
             }}>
-              <Text style={{ fontSize: 22 }}>🤖</Text>
+              {/* Use RNText, not the custom Text component (which calls hooks) */}
+              <RNText style={{ fontSize: 22 }}>🤖</RNText>
             </View>
           ),
           tabBarLabel: 'AI Coach',
@@ -145,13 +145,11 @@ export const AppNavigator = () => {
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAppReady(true);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user) {
@@ -167,8 +165,6 @@ export const AppNavigator = () => {
   if (!appReady || isLoading) {
     return <LoadingScreen message="Starting WealthPilot..." />;
   }
-
-  const theme = 'dark';
 
   return (
     <NavigationContainer>

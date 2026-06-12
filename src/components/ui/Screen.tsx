@@ -4,10 +4,10 @@ import {
   ScrollView,
   RefreshControl,
   ViewStyle,
-  StatusBar,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Colors } from '../../theme';
 import { useAppStore } from '../../store/appStore';
 
@@ -37,6 +37,7 @@ export const Screen: React.FC<ScreenProps> = ({
 
   const content = (
     <View style={[{ flex: 1, backgroundColor: bg }, style]}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       {scroll ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -72,23 +73,11 @@ export const Screen: React.FC<ScreenProps> = ({
   );
 
   if (noSafeArea) {
-    return (
-      <>
-        <StatusBar
-          barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-          backgroundColor={bg}
-        />
-        {content}
-      </>
-    );
+    return content;
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
-      <StatusBar
-        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={bg}
-      />
       {content}
     </SafeAreaView>
   );
