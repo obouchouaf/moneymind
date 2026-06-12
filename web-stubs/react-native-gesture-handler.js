@@ -1,0 +1,20 @@
+import React from 'react';
+import { View } from 'react-native';
+
+export const GestureHandlerRootView = ({ children, style }) => React.createElement(View, { style }, children);
+export const PanGestureHandler = ({ children }) => children;
+export const TapGestureHandler = ({ children }) => children;
+export const Swipeable = ({ children }) => children;
+export const RectButton = ({ children, onPress, style }) => React.createElement(View, { style, onStartShouldSetResponder: () => true, onResponderRelease: onPress }, children);
+export const BorderlessButton = RectButton;
+export const BaseButton = RectButton;
+export const ScrollView = require('react-native').ScrollView;
+export const FlatList = require('react-native').FlatList;
+export const Switch = require('react-native').Switch;
+export const TextInput = require('react-native').TextInput;
+export const DrawerLayout = View;
+export const State = {};
+export const Directions = {};
+export const gestureHandlerRootHOC = (component) => component;
+export const GestureDetector = ({ children }) => children;
+export const Gesture = { Pan: () => ({}), Tap: () => ({}), Simultaneous: () => ({}) };
