@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Budget, Subscription, SavingsGoal, NotificationPreferences } from '../types';
 import { supabase } from '../services/supabase';
 import { format } from 'date-fns';
+import { DEMO_BUDGETS, DEMO_SUBSCRIPTIONS, DEMO_SAVINGS_GOALS } from '../constants/demoData';
 
 interface AppState {
   budgets: Budget[];
@@ -42,6 +43,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoading: false,
 
   fetchBudgets: async () => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) { set({ budgets: DEMO_BUDGETS }); return; }
     const currentMonth = format(new Date(), 'yyyy-MM');
     const { data } = await supabase
       .from('budgets')
@@ -72,6 +75,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchSubscriptions: async () => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) { set({ subscriptions: DEMO_SUBSCRIPTIONS }); return; }
     const { data } = await supabase.from('subscriptions').select('*').eq('is_active', true);
     if (data) set({ subscriptions: data });
   },
@@ -98,6 +103,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchSavingsGoals: async () => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) { set({ savingsGoals: DEMO_SAVINGS_GOALS }); return; }
     const { data } = await supabase.from('savings_goals').select('*');
     if (data) set({ savingsGoals: data });
   },

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Transaction } from '../types';
 import { supabase } from '../services/supabase';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { DEMO_TRANSACTIONS } from '../constants/demoData';
 
 interface TransactionFilters {
   search: string;
@@ -38,6 +39,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   fetchTransactions: async () => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) {
+      set({ transactions: [...DEMO_TRANSACTIONS].sort((a, b) => b.date.localeCompare(a.date)), isLoading: false });
+      return;
+    }
     set({ isLoading: true });
     const { data, error } = await supabase
       .from('transactions')
@@ -48,6 +54,12 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   addTransaction: async (t) => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) {
+      const newTx: Transaction = { ...t, id: `demo-${Date.now()}`, user_id: 'demo-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      set((state) => ({ transactions: [newTx, ...state.transactions] }));
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data, error } = await supabase
@@ -61,6 +73,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   updateTransaction: async (id, t) => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) {
+      set((state) => ({ transactions: state.transactions.map((tx) => tx.id === id ? { ...tx, ...t, updated_at: new Date().toISOString() } : tx) }));
+      return;
+    }
     const { data, error } = await supabase
       .from('transactions')
       .update({ ...t, updated_at: new Date().toISOString() })
@@ -75,6 +92,11 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   deleteTransaction: async (id) => {
+    const { useAuthStore } = require('./authStore');
+    if (useAuthStore.getState().isDemoMode) {
+      set((state) => ({ transactions: state.transactions.filter((tx) => tx.id !== id) }));
+      return;
+    }
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (!error) {
       set((state) => ({ transactions: state.transactions.filter((tx) => tx.id !== id) }));

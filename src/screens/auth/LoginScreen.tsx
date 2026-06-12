@@ -11,6 +11,8 @@ import { Button } from '../../components/ui/Button';
 import { Colors, Spacing } from '../../theme';
 import { supabase } from '../../services/supabase';
 import { useAuthStore } from '../../store/authStore';
+import { useTransactionStore } from '../../store/transactionStore';
+import { useAppStore } from '../../store/appStore';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -24,6 +26,14 @@ export const LoginScreen = ({ navigation }: any) => {
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+  const { enterDemoMode } = useAuthStore();
+  const { fetchTransactions } = useTransactionStore();
+  const { fetchAll } = useAppStore();
+
+  const handleDemo = async () => {
+    enterDemoMode();
+    await Promise.all([fetchTransactions(), fetchAll()]);
+  };
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -127,6 +137,23 @@ export const LoginScreen = ({ navigation }: any) => {
               fullWidth
             />
           </View>
+
+          {/* Demo mode */}
+          <TouchableOpacity
+            onPress={handleDemo}
+            style={{
+              marginTop: Spacing.md,
+              padding: Spacing.md,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: 'rgba(255,200,0,0.4)',
+              backgroundColor: 'rgba(255,200,0,0.08)',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: '#FFD700', fontWeight: '700', fontSize: 15 }}>✨ Try Demo — No account needed</Text>
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 4 }}>Explore with Alex Johnson's sample data</Text>
+          </TouchableOpacity>
 
           {/* Sign up */}
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.lg }}>

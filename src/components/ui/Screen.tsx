@@ -5,11 +5,14 @@ import {
   RefreshControl,
   ViewStyle,
   Platform,
+  Text as RNText,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Colors } from '../../theme';
 import { useAppStore } from '../../store/appStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -34,10 +37,19 @@ export const Screen: React.FC<ScreenProps> = ({
 }) => {
   const theme = useAppStore((s) => s.theme);
   const bg = Colors[theme].background;
+  const { isDemoMode, exitDemoMode } = useAuthStore();
 
   const content = (
     <View style={[{ flex: 1, backgroundColor: bg }, style]}>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      {isDemoMode && (
+        <TouchableOpacity
+          onPress={exitDemoMode}
+          style={{ backgroundColor: '#FFD700', paddingVertical: 6, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <RNText style={{ color: '#000', fontWeight: '700', fontSize: 12 }}>✨ DEMO MODE — Tap to exit</RNText>
+        </TouchableOpacity>
+      )}
       {scroll ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
