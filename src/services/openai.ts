@@ -1,8 +1,14 @@
 import OpenAI from 'openai';
 
-const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
+let _client: OpenAI | null = null;
 
-const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+function getClient(): OpenAI {
+  if (!_client) {
+    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY || 'missing';
+    _client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+  }
+  return _client;
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -20,7 +26,7 @@ ${userContext}
 Always give specific, actionable advice based on the user's actual data. Be encouraging but honest.
 Keep responses concise (2-4 sentences unless a detailed plan is requested). Use emojis sparingly.`;
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       { role: 'system', content: systemPrompt },
@@ -34,7 +40,7 @@ Keep responses concise (2-4 sentences unless a detailed plan is requested). Use 
 }
 
 export async function generateFinancialInsight(userContext: string): Promise<string> {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -60,7 +66,7 @@ export async function generateSavingsplan(
   monthlyContribution: number,
   monthlyIncome: number
 ): Promise<string> {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
@@ -80,7 +86,7 @@ export async function generateBudgetRecommendations(
   expenses: Record<string, number>,
   currency: string
 ): Promise<string> {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
